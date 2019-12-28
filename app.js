@@ -1,5 +1,20 @@
 let appState = {
-  shoppingCart: [],
+  shoppingCart: [
+    {
+      id: 2,
+      image: "./images/pro2.jpg",
+      name: "interior",
+      price: 12.99,
+      quantity: 1
+    },
+    {
+      id: 3,
+      image: "./images/pro3.jpg",
+      name: "interior",
+      price: 12.99,
+      quantity: 2
+    }
+  ],
   products: [
     {
       id: 1,
@@ -113,8 +128,8 @@ function renderProductItems(state) {
           alt="product"
           class="product-img"
         />
-        <button class="add-to-art-btn" data-id="${item.id}">
-          <i class="fas fa-shopping-cart"></i>add to bag
+        <button class="add-to-cart-btn" data-id="${item.id}">
+          <i class="fas fa-shopping-cart"></i>add to cart
         </button>
       </div>
       <h3>${item.name}</h3>
@@ -130,7 +145,7 @@ function renderProductItems(state) {
 //End of render products
 
 //Render shoppingCart
-function renderShoppingcart() {
+function renderShoppingcart(state) {
   return `
   <!-- cart -->
     <div class="cart-overlay">
@@ -140,29 +155,79 @@ function renderShoppingcart() {
         </span>
         <h2>your cart</h2>
         <div class="cart-content">
-        <!-- cart item -->
-          <div class="cart-item">
-            <img src="./images/pro1.jpg" alt="product" />
-            <div>
-              <h4>interior</h4>
-              <h5>$14</h5>
-              <span class="remove-item">remove</span>
-            </div>
-            <div>
-              <i class="fas fa-chevron-up"></i>
-              <p class="item-amount">1</p>
-              <i class="fas fa-chevron-down"></i>
-            </div>
-          </div>
-          <!-- End of  cart item -->
+        ${renderCartItem(appState)}
         </div>
-        <div class="cart-footer">
-        <h3>your total :$ <span class="cart-total">0</span></h3>
-        <button class="clear-cart banner-btn">clear cart</button>
-        </div>
+        ${renderCartFooter(appState)}
         </div>
         </div>
  <!-- end of cart -->
- `;
+  `;
 }
+
+//render cart items
+function renderCartItem(state) {
+  const shoppingCartElements = state.shoppingCart.map(function(item) {
+    return `
+    <!-- cart item -->
+              <div class="cart-item">
+                <img src="${item.image}" alt="product" />
+                <div>
+                  <h4>${item.name}</h4>
+                  <h5>$${item.price}</h5>
+                  <span class="remove-item">remove</span>
+                </div>
+                <div>
+                  <i class="fas fa-chevron-up"></i>
+                  <p class="item-amount">${item.quantity}</p>
+                  <i class="fas fa-chevron-down"></i>
+                </div>
+              </div>
+              <!-- End of  cart item -->   
+    `;
+  });
+  return shoppingCartElements.join("");
+}
+//End of render cart items
+
+//Render cart footer
+function renderCartFooter(state) {
+  const totalCart = state.shoppingCart.reduce(function(sum, item) {
+    sum = sum + item.price * item.quantity;
+    return sum;
+  }, 0);
+  return `
+  <div class="cart-footer">
+        <h3>your total :$ <span class="cart-total">${totalCart}</span></h3>
+        <button class="clear-cart banner-btn">clear cart</button>
+        </div>
+    `;
+}
+//End of Render cart footer
 //End of Render shoppingCart
+
+function bindEvents() {
+  const addToCartButtons = document.querySelectorAll(".add-to-cart-btn");
+  addToCartButtons.forEach(function(addToCartBtn) {
+    addToCartBtn.addEventListener("click", function() {
+      let productId = addToCartBtn.dataset.id;
+      let product = appState.products.find(function(item) {
+        return item.id == productId;
+      });
+      const cartItemWithProductId = appState.shoppingCart.find(function(item) {
+        return item.id == productId;
+      });
+      if (cartItemWithProductId !== undefined) {
+        cartItemWithProductId.quantity += 1;
+      } else {
+        const cartItem = {
+          id: product.id,
+          image: product.image,
+          name: product.name,
+          price: product.price,
+          quantity: 1
+        };
+        appState.shoppingCart.push(cartItem);
+      }
+    });
+  });
+}

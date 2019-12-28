@@ -117,7 +117,7 @@ body {
   position: relative;
   overflow: hidden;
 }
-.add-to-art-btn {
+.add-to-cart-btn {
   position: absolute;
   top: 70%;
   right: 0;
@@ -131,13 +131,13 @@ body {
   transform: translateX(101%);
   cursor: pointer;
 }
-.add-to-art-btn:hover {
+.add-to-cart-btn:hover {
   color: var(--mainWhite);
 }
 .fa-shopping-cart {
   margin-right: 0.5rem;
 }
-.img-container:hover .add-to-art-btn {
+.img-container:hover .add-to-cart-btn {
   transform: translateX(0);
 }
 .product-img {
