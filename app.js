@@ -1,45 +1,25 @@
 let appState = {
   shoppingCart: [
     {
+      id: 1,
+      image: "./images/pro1.jpg",
+      name: "interior",
+      price: 10.99,
+      quantity: 1
+    },
+    {
       id: 2,
       image: "./images/pro2.jpg",
       name: "interior",
       price: 12.99,
       quantity: 1
-    },
-    {
-      id: 3,
-      image: "./images/pro3.jpg",
-      name: "interior",
-      price: 12.99,
-      quantity: 2
     }
   ],
   products: [
-    {
-      id: 1,
-      image: "./images/pro1.jpg",
-      name: "interior",
-      price: 10.99
-    },
-    {
-      id: 2,
-      image: "./images/pro2.jpg",
-      name: "interior",
-      price: 12.99
-    },
-    {
-      id: 3,
-      image: "./images/pro3.jpg",
-      name: "interior",
-      price: 12.99
-    },
-    {
-      id: 4,
-      image: "./images/pro4.jpg",
-      name: "interior",
-      price: 22.99
-    },
+    { id: 1, image: "./images/pro1.jpg", name: "interior", price: 10.99 },
+    { id: 2, image: "./images/pro2.jpg", name: "interior", price: 12.99 },
+    { id: 3, image: "./images/pro3.jpg", name: "interior", price: 12.99 },
+    { id: 4, image: "./images/pro4.jpg", name: "interior", price: 22.99 },
     { id: 5, image: "./images/pro5.jpg", name: "interior", price: 24.99 },
     { id: 6, image: "./images/pro6.jpg", name: "interior", price: 32.99 },
     { id: 7, image: "./images/pro7.jpg", name: "interior", price: 45.99 },
@@ -55,16 +35,23 @@ render(appState);
 function render() {
   const body = document.querySelector("body");
   let template = `
-  ${renderNavBar()}
+  ${renderNavBar(appState)}
   ${renderBanner()}
   ${renderProducts()}
   ${renderShoppingcart()}
     `;
+
   body.innerHTML = template;
+
+  bindEvents();
 }
 
 //render Navbar
-function renderNavBar() {
+function renderNavBar(state) {
+  const cartLength = state.shoppingCart.reduce(function(sum, item) {
+    sum += item.quantity;
+    return sum;
+  }, 0);
   return `
   <!-- navbar -->
   <nav class="navbar">
@@ -77,7 +64,7 @@ function renderNavBar() {
         <span class="nav-icon">
           <i class="fas fa-cart-plus cart-icon"></i>
         </span>
-        <cart class="cart-items">0</cart>
+        <cart class="cart-items">${cartLength}</cart>
       </div>
     </div>
   </nav>
@@ -174,12 +161,12 @@ function renderCartItem(state) {
                 <div>
                   <h4>${item.name}</h4>
                   <h5>$${item.price}</h5>
-                  <span class="remove-item">remove</span>
+                  <span class="remove-item" data-id="${item.id}">remove</span>
                 </div>
                 <div>
-                  <i class="fas fa-chevron-up"></i>
+                  <i class="fas fa-chevron-up" data-id="${item.id}"></i>
                   <p class="item-amount">${item.quantity}</p>
-                  <i class="fas fa-chevron-down"></i>
+                  <i class="fas fa-chevron-down" data-id="${item.id}"></i>
                 </div>
               </div>
               <!-- End of  cart item -->   
@@ -197,7 +184,9 @@ function renderCartFooter(state) {
   }, 0);
   return `
   <div class="cart-footer">
-        <h3>your total :$ <span class="cart-total">${totalCart}</span></h3>
+        <h3>your total :$ <span class="cart-total">${totalCart.toFixed(
+          2
+        )}</span></h3>
         <button class="clear-cart banner-btn">clear cart</button>
         </div>
     `;
@@ -206,16 +195,50 @@ function renderCartFooter(state) {
 //End of Render shoppingCart
 
 function bindEvents() {
+  //bind event to open/close cart
+  document.querySelector(".cart-btn").addEventListener("click", showCart);
+  document.querySelector(".close-cart").addEventListener("click", hideCart);
+  //End of bind event to open/close cart
+
+  //Bind Event-- add products to cart
+  addToCart();
+  //End of Bind Event-- add products to cart
+
+  // function Bind Event to chevron-up
+  increaseQuantity();
+  //End offunction Bind Event to chevron-up
+
+  // function Bind Event to chevron-down
+  decreaseQuantity();
+  // End of function Bind Event to chevron-down
+  removeItem(appState);
+
+  clearCart();
+}
+//////////////////////////////////////////////
+function showCart() {
+  const cartOverlay = document.querySelector(".cart-overlay");
+  const cartDOM = document.querySelector(".cart");
+  cartOverlay.classList.add("transparentBcg");
+  cartDOM.classList.add("showCart");
+}
+function hideCart() {
+  const cartOverlay = document.querySelector(".cart-overlay");
+  const cartDOM = document.querySelector(".cart");
+  cartOverlay.classList.remove("transparentBcg");
+  cartDOM.classList.remove("showCart");
+}
+
+function addToCart() {
   const addToCartButtons = document.querySelectorAll(".add-to-cart-btn");
-  addToCartButtons.forEach(function(addToCartBtn) {
-    addToCartBtn.addEventListener("click", function() {
-      let productId = addToCartBtn.dataset.id;
-      let product = appState.products.find(function(item) {
-        return item.id == productId;
-      });
-      const cartItemWithProductId = appState.shoppingCart.find(function(item) {
-        return item.id == productId;
-      });
+  addToCartButtons.forEach(function(button) {
+    button.addEventListener("click", function() {
+      let productId = button.dataset.id;
+      let product = appState.products.find(item => item.id == productId);
+      let cartItemWithProductId = appState.shoppingCart.find(
+        item => item.id == productId
+      );
+
       if (cartItemWithProductId !== undefined) {
         cartItemWithProductId.quantity += 1;
       } else {
@@ -227,7 +250,66 @@ function bindEvents() {
           quantity: 1
         };
         appState.shoppingCart.push(cartItem);
+        console.log(appState.shoppingCart);
       }
+      render(appState);
     });
+  });
+}
+function removeItem() {
+  let removeItemBtns = document.querySelectorAll(".remove-item");
+  removeItemBtns.forEach(function(button) {
+    button.addEventListener("click", function() {
+      let productId = button.dataset.id;
+      let product = appState.shoppingCart.find(item => item.id == productId);
+      let position = appState.shoppingCart.indexOf(product);
+      appState.shoppingCart.splice(position, 1);
+      render(appState);
+      showCart();
+    });
+  });
+}
+function increaseQuantity() {
+  const increaseQuantityBtns = document.querySelectorAll(".fa-chevron-up");
+  increaseQuantityBtns.forEach(function(button) {
+    button.addEventListener("click", function() {
+      let productId = button.dataset.id;
+      let cartItemWithProductId = appState.shoppingCart.find(
+        item => item.id == productId
+      );
+      cartItemWithProductId.quantity += 1;
+      render(appState);
+      showCart();
+    });
+  });
+}
+function decreaseQuantity() {
+  const decreaseQuantityBtns = document.querySelectorAll(".fa-chevron-down");
+  decreaseQuantityBtns.forEach(function(button) {
+    button.addEventListener("click", function() {
+      let productId = button.dataset.id;
+      let cartItemWithProductId = appState.shoppingCart.find(
+        item => item.id == productId
+      );
+      let position = appState.shoppingCart.indexOf(cartItemWithProductId);
+      if (cartItemWithProductId.quantity > 1) {
+        cartItemWithProductId.quantity -= 1;
+      } else {
+        appState.shoppingCart.splice(position, 1);
+      }
+      render(appState);
+      showCart();
+    });
+  });
+}
+function clearCart() {
+  document.querySelector(".clear-cart").addEventListener("click", function() {
+    let shoppingCartLength = appState.shoppingCart.length;
+
+    console.log(shoppingCartLength);
+    appState.shoppingCart.splice(0, shoppingCartLength);
+    console.log(appState.shoppingCart);
+    render(appState);
+    showCart();
   });
 }
